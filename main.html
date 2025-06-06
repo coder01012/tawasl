@@ -1,129 +1,234 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الرئيسية</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="top-bar">
-    <span id="my-username" class="username"></span>
-    <button id="logout">تسجيل الخروج</button>
-  </header>
+  <div class="top-bar">
+    <span id="my-username">@اسمك</span>
+    <button id="logout-btn">تسجيل الخروج</button>
+  </div>
 
-  <section class="search-section">
-    <input type="text" id="search" placeholder="ابحث عن اسم المستخدم...">
-    <button id="chat-btn">بدء المحادثة</button>
-  </section>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم" />
+    <button id="chat-btn">بدء محادثة</button>
+  </div>
 
-  <section>
-    <h2>الرسائل الواردة</h2>
-    <div id="chat-list"></div>
-  </section>
+  <div id="chat-with"></div>
+
+  <div id="chat-box"></div>
+
+  <div class="chat-input" style="display: none">
+    <input type="text" id="message-input" placeholder="اكتب رسالتك..." />
+    <button id="send-btn">إرسال</button>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDFPkNaiaExQZ6D3y0CKxIn6Pi0nrE9Fno",
-      authDomain: "tawasal-431a8.firebaseapp.com",
-      databaseURL: "https://tawasal-431a8-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "tawasal-431a8",
-      storageBucket: "tawasal-431a8.appspot.com",
-      messagingSenderId: "81068658401",
-      appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
+    import { auth, db } from "./firebase.js";
+    import {
+      ref,
+      get,
+      push,
+      onChildAdded,
+      query,
+      orderByChild,
+      equalTo,
+    } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
     const uid = localStorage.getItem("uid");
-    if (!uid) location.href = "index.html";
-
-    const usernameSpan = document.getElementById("my-username");
-    const logoutBtn = document.getElementById("logout");
+    const myUsernameSpan = document.getElementById("my-username");
+    const logoutBtn = document.getElementById("logout-btn");
     const searchInput = document.getElementById("search");
     const chatBtn = document.getElementById("chat-btn");
-    const chatList = document.getElementById("chat-list");
+    const chatWithDiv = document.getElementById("chat-with");
+    const chatBox = document.getElementById("chat-box");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const chatInputDiv = document.querySelector(".chat-input");
 
-    logoutBtn.onclick = () => {
+    let currentChatId = "";
+    let currentUsername = "";
+
+    // عرض اسم المستخدم الخاص بي
+    get(ref(db, "users/" + uid)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const username = snapshot.val().username;
+        myUsernameSpan.textContent = "@" + username;
+        myUsernameSpan.style.cursor = "pointer";
+        myUsernameSpan.title = "اضغط لنسخ اسمك";
+
+        myUsernameSpan.addEventListener("click", () => {
+          navigator.clipboard.writeText("@" + username);
+          alert("تم نسخ اسم المستخدم");
+        });
+
+        // استمع للمحادثات الجديدة تلقائياً
+        listenForNewChats(uid, username);
+      }
+    });
+
+    // تسجيل خروج
+    logoutBtn.addEventListener("click", () => {
       signOut(auth).then(() => {
         localStorage.clear();
-        location.href = "index.html";
+        window.location.href = "index.html";
       });
-    };
+    });
 
-    function openChatWith(uid2) {
-      localStorage.setItem("chatWith", uid2);
-      location.reload();
-    }
+    // بدء محادثة
+    chatBtn.addEventListener("click", async () => {
+      const searchValue = searchInput.value.trim().replace("@", "");
+      if (searchValue === "") return;
 
-    async function getUsername(uid) {
-      const snap = await get(ref(db, "users/" + uid));
-      return snap.exists() ? snap.val().username : null;
-    }
+      await startChat(searchValue);
+    });
 
-    async function loadMyUsername() {
-      const snap = await get(ref(db, "users/" + uid));
-      if (snap.exists()) {
-        const username = snap.val().username;
-        usernameSpan.textContent = "@" + username;
-        usernameSpan.onclick = () => {
-          navigator.clipboard.writeText(username);
-          alert("تم نسخ اسم المستخدم");
-        };
+    // إرسال رسالة
+    sendBtn.addEventListener("click", () => {
+      const text = messageInput.value.trim();
+      if (text && currentChatId) {
+        push(ref(db, "chats/" + currentChatId), {
+          uid: uid,
+          text: text,
+          time: Date.now(),
+        });
+        messageInput.value = "";
       }
+    });
+
+    // دعم الدخول عبر ?user=@اسم
+    const params = new URLSearchParams(window.location.search);
+    const autoUser = params.get("user");
+    if (autoUser) {
+      searchInput.value = autoUser;
+      chatBtn.click();
     }
 
-    async function searchUserAndChat() {
-      const inputName = searchInput.value.trim().replace("@", "");
-      const valid = /^[\u0621-\u064Aa-zA-Z0-9]{1,12}$/.test(inputName);
-      if (!valid) return alert("الاسم غير صالح");
-
-      const usersSnap = await get(ref(db, "users"));
-      let found = false;
-      usersSnap.forEach((childSnap) => {
-        const u = childSnap.val().username;
-        if (u === inputName) {
-          openChatWith(childSnap.key);
-          found = true;
-        }
-      });
-      if (!found) alert("المستخدم غير موجود");
-    }
-
-    async function loadIncomingMessages() {
-      const chatsSnap = await get(ref(db, "chats"));
-      chatsSnap.forEach(async (childSnap) => {
-        const chatId = childSnap.key;
-        if (chatId.includes(uid)) {
-          const [u1, u2] = chatId.split("_");
-          const otherUID = u1 === uid ? u2 : u1;
-          const messages = Object.values(childSnap.val());
-          const hasMessagesToMe = messages.some(m => m.to === uid);
-          if (hasMessagesToMe) {
-            const otherName = await getUsername(otherUID);
-            if (otherName) {
-              const chatBox = document.createElement("div");
-              chatBox.className = "chat-box";
-              chatBox.innerHTML = `
-                <span class="user">@${otherName}</span>
-                <button onclick="localStorage.setItem('chatWith', '${otherUID}'); location.reload();">عرض المحادثة</button>
-              `;
-              chatList.appendChild(chatBox);
+    // استمع للمحادثات الجديدة تلقائياً
+    async function listenForNewChats(myUid, myUsername) {
+      // استمع لكل المحادثات التي تحتوي على UID الخاص بي
+      const chatsRef = ref(db, "chats");
+      onChildAdded(chatsRef, async (snapshot) => {
+        const chatId = snapshot.key;
+        if (chatId.includes(myUid)) {
+          // استخراج UID الآخر من معرف المحادثة
+          const [uid1, uid2] = chatId.split("_");
+          const otherUid = uid1 === myUid ? uid2 : uid1;
+          
+          // الحصول على اسم المستخدم الآخر
+          const otherUserSnapshot = await get(ref(db, `users/${otherUid}`));
+          if (otherUserSnapshot.exists()) {
+            const otherUsername = otherUserSnapshot.val().username;
+            
+            // إذا كانت هذه المحادثة الحالية، قم بتحديث العرض
+            if (chatId === currentChatId) {
+              const msg = snapshot.val();
+              const msgDiv = document.createElement("div");
+              msgDiv.className = msg.uid === myUid ? "message me" : "message other";
+              msgDiv.textContent = msg.text;
+              chatBox.appendChild(msgDiv);
+              chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+              // عرض إشعار بوجود رسالة جديدة
+              showNewMessageNotification(otherUsername, chatId);
             }
           }
         }
       });
     }
 
-    chatBtn.onclick = searchUserAndChat;
-    loadMyUsername();
-    loadIncomingMessages();
+    // عرض إشعار برسالة جديدة
+    function showNewMessageNotification(username, chatId) {
+      const notification = document.createElement("div");
+      notification.className = "new-message-notification";
+      notification.innerHTML = `
+        <span>رسالة جديدة من @${username}</span>
+        <button class="open-chat-btn">فتح المحادثة</button>
+      `;
+      
+      const openBtn = notification.querySelector(".open-chat-btn");
+      openBtn.addEventListener("click", () => {
+        startChat(username);
+        notification.remove();
+      });
+      
+      document.body.appendChild(notification);
+      
+      // إزالة الإشعار بعد 5 ثواني
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // بدء محادثة مع مستخدم
+    async function startChat(username) {
+      const searchValue = username.replace("@", "");
+      if (searchValue === "") return;
+
+      const otherSnapshot = await get(ref(db, "usernames/" + searchValue));
+      if (!otherSnapshot.exists()) {
+        alert("المستخدم غير موجود");
+        return;
+      }
+
+      const otherUID = otherSnapshot.val();
+      currentUsername = searchValue;
+
+      const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
+      currentChatId = chatId;
+
+      chatWithDiv.innerHTML = `<span class="chat-username" id="go-to">@${currentUsername}</span>`;
+      document.getElementById("go-to").addEventListener("click", () => {
+        window.location.href = "main.html?user=@" + currentUsername;
+      });
+
+      chatBox.innerHTML = "";
+      chatInputDiv.style.display = "flex";
+
+      // جلب جميع الرسائل السابقة لهذه المحادثة
+      const messagesRef = ref(db, "chats/" + chatId);
+      onChildAdded(messagesRef, (snapshot) => {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement("div");
+        msgDiv.className = msg.uid === uid ? "message me" : "message other";
+        msgDiv.textContent = msg.text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    }
   </script>
+  
+  <style>
+    .new-message-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #fff;
+      padding: 10px 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+    }
+    
+    .open-chat-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    .open-chat-btn:hover {
+      background: #45a049;
+    }
+  </style>
 </body>
-</html>
+  </html>
