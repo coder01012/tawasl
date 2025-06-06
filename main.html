@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الرئيسية - واتساب محمد</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الرئيسية</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="header">
-    <span id="my-username" class="username" title="اضغط للنسخ"></span>
+    <span id="my-username" class="username"></span>
     <button id="logout">تسجيل الخروج</button>
   </div>
 
-  <div class="search-box">
-    <input type="text" id="search" placeholder="أدخل اسم المستخدم..." />
-    <button id="chat-btn">بدء محادثة</button>
+  <div class="search">
+    <input type="text" id="search" placeholder="ابحث عن اسم المستخدم...">
+    <button id="chat-btn">بدء المحادثة</button>
   </div>
 
   <h2>محادثاتك</h2>
@@ -22,16 +22,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      get,
-      child,
-    } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
-    import {
-      getAuth,
-      signOut,
-    } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDFPkNaiaExQZ6D3y0CKxIn6Pi0nrE9Fno",
@@ -40,7 +32,7 @@
       projectId: "tawasal-431a8",
       storageBucket: "tawasal-431a8.appspot.com",
       messagingSenderId: "81068658401",
-      appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0",
+      appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -48,13 +40,13 @@
     const auth = getAuth(app);
 
     const uid = localStorage.getItem("uid");
-    const chatWithDiv = document.getElementById("chat-with");
+    if (!uid) location.href = "index.html";
+
+    const usernameSpan = document.getElementById("my-username");
+    const logoutBtn = document.getElementById("logout");
     const searchInput = document.getElementById("search");
     const chatBtn = document.getElementById("chat-btn");
-    const myUsernameSpan = document.getElementById("my-username");
-    const logoutBtn = document.getElementById("logout");
-
-    if (!uid) location.href = "index.html";
+    const chatWithDiv = document.getElementById("chat-with");
 
     logoutBtn.onclick = () => {
       signOut(auth).then(() => {
@@ -63,65 +55,55 @@
       });
     };
 
-    function isValidUsername(name) {
-      const pattern = /^[\u0621-\u064A\u0660-\u0669a-zA-Z0-9]{1,12}$/;
-      return pattern.test(name);
-    }
-
-    async function loadUserInfo() {
+    async function getUsername(uid) {
       const snap = await get(ref(db, "users/" + uid));
-      if (snap.exists()) {
-        const username = snap.val().username;
-        myUsernameSpan.textContent = "@" + username;
-        myUsernameSpan.onclick = () => {
-          navigator.clipboard.writeText(username);
-          alert("تم نسخ اسم المستخدم");
-        };
-      }
+      return snap.exists() ? snap.val().username : null;
     }
 
-    async function loadChats() {
-      const snap = await get(ref(db, "chats"));
-      snap.forEach(async (childSnap) => {
+    async function displayChats() {
+      const chatsSnap = await get(ref(db, "chats"));
+      chatsSnap.forEach(async (childSnap) => {
         const chatId = childSnap.key;
         if (chatId.includes(uid)) {
           const [u1, u2] = chatId.split("_");
           const otherUID = u1 === uid ? u2 : u1;
-          const otherSnap = await get(ref(db, "users/" + otherUID));
-          if (otherSnap.exists()) {
-            const otherName = otherSnap.val().username;
+          const otherName = await getUsername(otherUID);
+          if (otherName) {
             const box = document.createElement("div");
-            box.innerHTML = `
-              <span class="chat-username">@${otherName}</span>
-              <button onclick="location.href='chat.html?u=${otherUID}'">عرض المحادثة</button>
-            `;
+            box.innerHTML = `@${otherName} <button onclick="location.href='chat.html?u=${otherUID}'">عرض المحادثة</button>`;
             chatWithDiv.appendChild(box);
           }
         }
       });
     }
 
-    chatBtn.addEventListener("click", async () => {
+    chatBtn.onclick = async () => {
       const name = searchInput.value.trim().replace("@", "");
-      if (!isValidUsername(name)) {
-        alert("اسم المستخدم غير صالح");
-        return;
-      }
+      const isValid = /^[\u0621-\u064Aa-zA-Z0-9]{1,12}$/.test(name);
+      if (!isValid) return alert("الاسم غير صالح");
 
-      const snap = await get(child(ref(db), "users"));
+      const usersSnap = await get(ref(db, "users"));
       let found = false;
-      snap.forEach((childSnap) => {
+      usersSnap.forEach((childSnap) => {
         if (childSnap.val().username === name) {
-          const otherUID = childSnap.key;
-          location.href = `chat.html?u=${otherUID}`;
+          location.href = "chat.html?u=" + childSnap.key;
           found = true;
         }
       });
       if (!found) alert("المستخدم غير موجود");
+    };
+
+    get(ref(db, "users/" + uid)).then((snap) => {
+      if (snap.exists()) {
+        usernameSpan.textContent = "@" + snap.val().username;
+        usernameSpan.onclick = () => {
+          navigator.clipboard.writeText(snap.val().username);
+          alert("تم نسخ اسم المستخدم");
+        };
+      }
     });
 
-    loadUserInfo();
-    loadChats();
+    displayChats();
   </script>
 </body>
 </html>
