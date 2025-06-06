@@ -1,110 +1,75 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول بجوجل</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        
-        .container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-        }
-        
-        h1 {
-            color: #4285F4;
-            margin-bottom: 30px;
-        }
-        
-        .google-btn {
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 0 auto;
-            transition: background-color 0.3s;
-        }
-        
-        .google-btn:hover {
-            background-color: #3367D6;
-        }
-        
-        .google-icon {
-            width: 20px;
-            height: 20px;
-            background-color: white;
-            padding: 8px;
-            border-radius: 2px;
-        }
-        
-        .user-info {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            display: none;
-        }
-        
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-        }
-        
-        .sign-out {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 16px;
-            margin-top: 15px;
-            cursor: pointer;
-        }
-        
-        .sign-out:hover {
-            background-color: #c82333;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>تسجيل الدخول</title>
 </head>
 <body>
-    <div class="container">
-        <h1>تسجيل الدخول</h1>
-        
-        <button id="googleSignIn" class="google-btn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google logo">
-            تسجيل الدخول بجوجل
-        </button>
-        
-        <div id="userInfo" class="user-info">
-            <img id="userPhoto" class="user-avatar" src="" alt="صورة المستخدم">
-            <h2 id="userName"></h2>
-            <p id="userEmail"></p>
-            <button id="signOut" class="sign-out">تسجيل الخروج</button>
-        </div>
-    </div>
+  <h1>مرحبًا بك في تطبيق التواصل</h1>
+  <button id="login-btn">تسجيل الدخول بجوجل</button>
 
-    <script type="module" src="app.js"></script>
+  <div id="username-container" style="display:none;">
+    <p>اختر اسم مستخدم:</p>
+    <input type="text" id="username-input" placeholder="اكتب اسمك">
+    <button id="save-username-btn">متابعة</button>
+  </div>
+
+  <script type="module">
+    import { auth, provider, db } from "./firebase.js";
+    import { signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    const loginBtn = document.getElementById("login-btn");
+    const usernameContainer = document.getElementById("username-container");
+    const usernameInput = document.getElementById("username-input");
+    const saveUsernameBtn = document.getElementById("save-username-btn");
+
+    loginBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          checkUsername(result.user.uid);
+        });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        checkUsername(user.uid);
+      }
+    });
+
+    function checkUsername(uid) {
+      const userRef = ref(db, "users/" + uid);
+      get(userRef).then((snapshot) => {
+        if (snapshot.exists() && snapshot.val().username) {
+          localStorage.setItem("uid", uid);
+          window.location.href = "main.html";
+        } else {
+          usernameContainer.style.display = "block";
+        }
+      });
+    }
+
+    saveUsernameBtn.addEventListener("click", () => {
+      const username = usernameInput.value.trim();
+      const uid = auth.currentUser.uid;
+
+      if (username !== "") {
+        const usersRef = ref(db, "usernames/" + username);
+        get(usersRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            alert("الاسم مستخدم بالفعل، اختر اسم آخر.");
+          } else {
+            set(ref(db, "usernames/" + username), uid);
+            set(ref(db, "users/" + uid), {
+              username: username
+            }).then(() => {
+              localStorage.setItem("uid", uid);
+              window.location.href = "main.html";
+            });
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
