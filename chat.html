@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>المحادثة</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="chat-header">
+    <span id="chat-username" class="username">@مستخدم</span>
+  </div>
+
+  <div class="chat-box" id="chat-box">
+    <!-- الرسائل تظهر هنا -->
+  </div>
+
+  <div class="chat-input">
+    <input type="text" id="message-input" placeholder="اكتب رسالتك...">
+    <button id="send-btn">إرسال</button>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    const uid = localStorage.getItem("uid");
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get("chatId");
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("send-btn");
+    const messageInput = document.getElementById("message-input");
+    const chatUsername = document.getElementById("chat-username");
+
+    let currentUsername = "";
+
+    // إظهار اسم المستخدم الآخر
+    const parts = chatId.split("_");
+    const otherUID = parts[0] === uid ? parts[1] : parts[0];
+
+    get(ref(db, "users/" + otherUID)).then(snapshot => {
+      if (snapshot.exists()) {
+        const username = snapshot.val().username;
+        currentUsername = username;
+        chatUsername.textContent = "@" + username;
+        chatUsername.addEventListener("click", () => {
+          window.location.href = "main.html?user=@" + username;
+        });
+      }
+    });
+
+    // عرض الرسائل عند الإضافة
+    const messagesRef = ref(db, "chats/" + chatId);
+    onChildAdded(messagesRef, (snapshot) => {
+      const msg = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = msg.uid === uid ? "message me" : "message other";
+      msgDiv.textContent = msg.text;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // إرسال رسالة
+    sendBtn.addEventListener("click", () => {
+      const text = messageInput.value.trim();
+      if (text !== "") {
+        push(messagesRef, {
+          uid: uid,
+          text: text,
+          time: Date.now()
+        });
+        messageInput.value = "";
+      }
+    });
+  </script>
+</body>
+</html>
