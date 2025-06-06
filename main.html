@@ -3,44 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <title>الرئيسية</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>الشاشة الرئيسية</h1>
+  <div class="top-bar">
+    <span id="my-username"></span>
+    <button id="logout-btn">تسجيل الخروج</button>
+  </div>
 
-  <input type="text" id="search" placeholder="اسم المستخدم للبحث">
-  <button id="chat-btn">ابدأ المحادثة</button>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم">
+    <button id="chat-btn">ابدأ المحادثة</button>
+  </div>
 
   <ul id="chat-list"></ul>
 
   <script type="module">
-    import { db } from "./firebase.js";
+    import { auth, db } from "./firebase.js";
     import { ref, get } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
     const uid = localStorage.getItem("uid");
+    const myUsernameSpan = document.getElementById("my-username");
+    const logoutBtn = document.getElementById("logout-btn");
     const searchInput = document.getElementById("search");
     const chatBtn = document.getElementById("chat-btn");
     const chatList = document.getElementById("chat-list");
 
-    chatBtn.addEventListener("click", () => {
-      const targetUsername = searchInput.value.trim();
-      if (targetUsername === "") return;
+    // عرض اسم المستخدم مع إمكانية نسخه
+    get(ref(db, "users/" + uid)).then(snapshot => {
+      if (snapshot.exists()) {
+        const username = snapshot.val().username;
+        const fullUsername = "@" + username;
+        myUsernameSpan.textContent = fullUsername;
+        myUsernameSpan.title = "انسخ اسمك";
+        myUsernameSpan.style.cursor = "pointer";
 
+        myUsernameSpan.addEventListener("click", () => {
+          navigator.clipboard.writeText(fullUsername);
+          alert("تم نسخ اسم المستخدم!");
+        });
+
+        // إذا فيه "?user=@اسم" في الرابط، نبدأ محادثة تلقائي
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetParam = urlParams.get("user");
+        if (targetParam) {
+          const cleanUsername = targetParam.replace("@", "");
+          startChat(cleanUsername);
+        }
+      }
+    });
+
+    // تسجيل خروج
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => {
+        localStorage.clear();
+        window.location.href = "index.html";
+      });
+    });
+
+    // بحث يدوي
+    chatBtn.addEventListener("click", () => {
+      const target = searchInput.value.trim().replace("@", "");
+      if (target) {
+        startChat(target);
+      }
+    });
+
+    // بدء المحادثة
+    function startChat(targetUsername) {
       get(ref(db, "usernames/" + targetUsername)).then(snapshot => {
         if (snapshot.exists()) {
           const otherUID = snapshot.val();
           const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
 
-          // حفظ المحادثة في القائمة
           const li = document.createElement("li");
-          li.textContent = targetUsername;
+          li.textContent = "@" + targetUsername;
           chatList.appendChild(li);
 
-          // لاحقًا: فتح صفحة الدردشة
+          // لاحقًا نفتح chat.html?chatId=...
         } else {
           alert("اسم المستخدم غير موجود");
         }
       });
-    });
+    }
   </script>
 </body>
 </html>
