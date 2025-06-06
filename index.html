@@ -1,75 +1,70 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <title>تسجيل الدخول</title>
-</head>
-<body>
-  <h1>مرحبًا بك في تطبيق التواصل</h1>
-  <button id="login-btn">تسجيل الدخول بجوجل</button>
-
-  <div id="username-container" style="display:none;">
-    <p>اختر اسم مستخدم:</p>
-    <input type="text" id="username-input" placeholder="اكتب اسمك">
-    <button id="save-username-btn">متابعة</button>
-  </div>
-
-  <script type="module">
-    import { auth, provider, db } from "./firebase.js";
-    import { signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
-
-    const loginBtn = document.getElementById("login-btn");
-    const usernameContainer = document.getElementById("username-container");
-    const usernameInput = document.getElementById("username-input");
-    const saveUsernameBtn = document.getElementById("save-username-btn");
-
-    loginBtn.addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          checkUsername(result.user.uid);
-        });
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        checkUsername(user.uid);
-      }
-    });
-
-    function checkUsername(uid) {
-      const userRef = ref(db, "users/" + uid);
-      get(userRef).then((snapshot) => {
-        if (snapshot.exists() && snapshot.val().username) {
-          localStorage.setItem("uid", uid);
-          window.location.href = "main.html";
-        } else {
-          usernameContainer.style.display = "block";
-        }
-      });
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>واتساب محمد بحسن</title>
+  <style>
+    body {
+      direction: rtl;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f1f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
     }
 
-    saveUsernameBtn.addEventListener("click", () => {
-      const username = usernameInput.value.trim();
-      const uid = auth.currentUser.uid;
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
 
-      if (username !== "") {
-        const usersRef = ref(db, "usernames/" + username);
-        get(usersRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            alert("الاسم مستخدم بالفعل، اختر اسم آخر.");
-          } else {
-            set(ref(db, "usernames/" + username), uid);
-            set(ref(db, "users/" + uid), {
-              username: username
-            }).then(() => {
-              localStorage.setItem("uid", uid);
-              window.location.href = "main.html";
-            });
-          }
-        });
-      }
-    });
+    button {
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #eee;
+    }
+
+    img {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>أهلاً في واتساب محمد بحسن</h1>
+  <button onclick="loginWithGoogle()">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" />
+    تسجيل الدخول بجوجل
+  </button>
+
+  <script type="module">
+    import { auth, provider } from './firebase.js';
+    import { signInWithPopup } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+
+    window.loginWithGoogle = function () {
+      signInWithPopup(auth, provider).then((result) => {
+        const user = result.user;
+        localStorage.setItem("uid", user.uid);
+        window.location.href = "username.html";
+      });
+    };
   </script>
 </body>
 </html>
