@@ -3,132 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الرئيسية</title>
+  <title>الرئيسية - واتساب محمد</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="top-bar">
-    <span id="my-username">@اسمك</span>
-    <button id="logout-btn">تسجيل الخروج</button>
+  <div class="header">
+    <span id="my-username" class="username" title="اضغط للنسخ"></span>
+    <button id="logout">تسجيل الخروج</button>
   </div>
 
   <div class="search-box">
-    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم" />
+    <input type="text" id="search" placeholder="أدخل اسم المستخدم..." />
     <button id="chat-btn">بدء محادثة</button>
   </div>
 
+  <h2>محادثاتك</h2>
   <div id="chat-with"></div>
 
-  <div id="chat-box"></div>
-
-  <div class="chat-input" style="display: none">
-    <input type="text" id="message-input" placeholder="اكتب رسالتك..." />
-    <button id="send-btn">إرسال</button>
-  </div>
-
   <script type="module">
-    import { auth, db } from "./firebase.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import {
+      getDatabase,
       ref,
       get,
-      push,
-      onChildAdded,
+      child,
     } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
-    import { signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import {
+      getAuth,
+      signOut,
+    } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDFPkNaiaExQZ6D3y0CKxIn6Pi0nrE9Fno",
+      authDomain: "tawasal-431a8.firebaseapp.com",
+      databaseURL: "https://tawasal-431a8-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "tawasal-431a8",
+      storageBucket: "tawasal-431a8.appspot.com",
+      messagingSenderId: "81068658401",
+      appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
     const uid = localStorage.getItem("uid");
-    const myUsernameSpan = document.getElementById("my-username");
-    const logoutBtn = document.getElementById("logout-btn");
+    const chatWithDiv = document.getElementById("chat-with");
     const searchInput = document.getElementById("search");
     const chatBtn = document.getElementById("chat-btn");
-    const chatWithDiv = document.getElementById("chat-with");
-    const chatBox = document.getElementById("chat-box");
-    const messageInput = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-btn");
-    const chatInputDiv = document.querySelector(".chat-input");
+    const myUsernameSpan = document.getElementById("my-username");
+    const logoutBtn = document.getElementById("logout");
 
-    let currentChatId = "";
-    let currentUsername = "";
+    if (!uid) location.href = "index.html";
 
-    // عرض اسم المستخدم الخاص بي
-    get(ref(db, "users/" + uid)).then((snapshot) => {
-      if (snapshot.exists()) {
-        const username = snapshot.val().username;
-        myUsernameSpan.textContent = "@" + username;
-        myUsernameSpan.style.cursor = "pointer";
-        myUsernameSpan.title = "اضغط لنسخ اسمك";
-
-        myUsernameSpan.addEventListener("click", () => {
-          navigator.clipboard.writeText("@" + username);
-          alert("تم نسخ اسم المستخدم");
-        });
-      }
-    });
-
-    // تسجيل خروج
-    logoutBtn.addEventListener("click", () => {
+    logoutBtn.onclick = () => {
       signOut(auth).then(() => {
         localStorage.clear();
-        window.location.href = "index.html";
+        location.href = "index.html";
       });
-    });
+    };
 
-    // بدء محادثة
+    function isValidUsername(name) {
+      const pattern = /^[\u0621-\u064A\u0660-\u0669a-zA-Z0-9]{1,12}$/;
+      return pattern.test(name);
+    }
+
+    async function loadUserInfo() {
+      const snap = await get(ref(db, "users/" + uid));
+      if (snap.exists()) {
+        const username = snap.val().username;
+        myUsernameSpan.textContent = "@" + username;
+        myUsernameSpan.onclick = () => {
+          navigator.clipboard.writeText(username);
+          alert("تم نسخ اسم المستخدم");
+        };
+      }
+    }
+
+    async function loadChats() {
+      const snap = await get(ref(db, "chats"));
+      snap.forEach(async (childSnap) => {
+        const chatId = childSnap.key;
+        if (chatId.includes(uid)) {
+          const [u1, u2] = chatId.split("_");
+          const otherUID = u1 === uid ? u2 : u1;
+          const otherSnap = await get(ref(db, "users/" + otherUID));
+          if (otherSnap.exists()) {
+            const otherName = otherSnap.val().username;
+            const box = document.createElement("div");
+            box.innerHTML = `
+              <span class="chat-username">@${otherName}</span>
+              <button onclick="location.href='chat.html?u=${otherUID}'">عرض المحادثة</button>
+            `;
+            chatWithDiv.appendChild(box);
+          }
+        }
+      });
+    }
+
     chatBtn.addEventListener("click", async () => {
-      const searchValue = searchInput.value.trim().replace("@", "");
-      if (searchValue === "") return;
-
-      const otherSnapshot = await get(ref(db, "usernames/" + searchValue));
-      if (!otherSnapshot.exists()) {
-        alert("المستخدم غير موجود");
+      const name = searchInput.value.trim().replace("@", "");
+      if (!isValidUsername(name)) {
+        alert("اسم المستخدم غير صالح");
         return;
       }
 
-      const otherUID = otherSnapshot.val();
-      currentUsername = searchValue;
-
-      const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
-      currentChatId = chatId;
-
-      chatWithDiv.innerHTML = `<span class="chat-username" id="go-to">@${currentUsername}</span>`;
-      document.getElementById("go-to").addEventListener("click", () => {
-        window.location.href = "main.html?user=@" + currentUsername;
+      const snap = await get(child(ref(db), "users"));
+      let found = false;
+      snap.forEach((childSnap) => {
+        if (childSnap.val().username === name) {
+          const otherUID = childSnap.key;
+          location.href = `chat.html?u=${otherUID}`;
+          found = true;
+        }
       });
-
-      chatBox.innerHTML = "";
-      chatInputDiv.style.display = "flex";
-
-      const messagesRef = ref(db, "chats/" + chatId);
-      onChildAdded(messagesRef, (snapshot) => {
-        const msg = snapshot.val();
-        const msgDiv = document.createElement("div");
-        msgDiv.className = msg.uid === uid ? "message me" : "message other";
-        msgDiv.textContent = msg.text;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      });
+      if (!found) alert("المستخدم غير موجود");
     });
 
-    // إرسال رسالة
-    sendBtn.addEventListener("click", () => {
-      const text = messageInput.value.trim();
-      if (text && currentChatId) {
-        push(ref(db, "chats/" + currentChatId), {
-          uid: uid,
-          text: text,
-          time: Date.now(),
-        });
-        messageInput.value = "";
-      }
-    });
-
-    // دعم الدخول عبر ?user=@اسم
-    const params = new URLSearchParams(window.location.search);
-    const autoUser = params.get("user");
-    if (autoUser) {
-      searchInput.value = autoUser;
-      chatBtn.click();
-    }
+    loadUserInfo();
+    loadChats();
   </script>
 </body>
 </html>
