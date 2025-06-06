@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>الرئيسية</title>
+</head>
+<body>
+  <h1>الشاشة الرئيسية</h1>
+
+  <input type="text" id="search" placeholder="اسم المستخدم للبحث">
+  <button id="chat-btn">ابدأ المحادثة</button>
+
+  <ul id="chat-list"></ul>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import { ref, get } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    const uid = localStorage.getItem("uid");
+    const searchInput = document.getElementById("search");
+    const chatBtn = document.getElementById("chat-btn");
+    const chatList = document.getElementById("chat-list");
+
+    chatBtn.addEventListener("click", () => {
+      const targetUsername = searchInput.value.trim();
+      if (targetUsername === "") return;
+
+      get(ref(db, "usernames/" + targetUsername)).then(snapshot => {
+        if (snapshot.exists()) {
+          const otherUID = snapshot.val();
+          const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
+
+          // حفظ المحادثة في القائمة
+          const li = document.createElement("li");
+          li.textContent = targetUsername;
+          chatList.appendChild(li);
+
+          // لاحقًا: فتح صفحة الدردشة
+        } else {
+          alert("اسم المستخدم غير موجود");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
