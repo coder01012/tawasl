@@ -1,26 +1,39 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الرئيسية</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="top-bar">
-    <span id="my-username"></span>
+    <span id="my-username">@اسمك</span>
     <button id="logout-btn">تسجيل الخروج</button>
   </div>
 
   <div class="search-box">
-    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم">
-    <button id="chat-btn">ابدأ المحادثة</button>
+    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم" />
+    <button id="chat-btn">بدء محادثة</button>
   </div>
 
-  <ul id="chat-list"></ul>
+  <div id="chat-with"></div>
+
+  <div id="chat-box"></div>
+
+  <div class="chat-input" style="display: none">
+    <input type="text" id="message-input" placeholder="اكتب رسالتك..." />
+    <button id="send-btn">إرسال</button>
+  </div>
 
   <script type="module">
     import { auth, db } from "./firebase.js";
-    import { ref, get } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import {
+      ref,
+      get,
+      push,
+      onChildAdded,
+    } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
     import { signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
     const uid = localStorage.getItem("uid");
@@ -28,29 +41,27 @@
     const logoutBtn = document.getElementById("logout-btn");
     const searchInput = document.getElementById("search");
     const chatBtn = document.getElementById("chat-btn");
-    const chatList = document.getElementById("chat-list");
+    const chatWithDiv = document.getElementById("chat-with");
+    const chatBox = document.getElementById("chat-box");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const chatInputDiv = document.querySelector(".chat-input");
 
-    // عرض اسم المستخدم مع إمكانية نسخه
-    get(ref(db, "users/" + uid)).then(snapshot => {
+    let currentChatId = "";
+    let currentUsername = "";
+
+    // عرض اسم المستخدم الخاص بي
+    get(ref(db, "users/" + uid)).then((snapshot) => {
       if (snapshot.exists()) {
         const username = snapshot.val().username;
-        const fullUsername = "@" + username;
-        myUsernameSpan.textContent = fullUsername;
-        myUsernameSpan.title = "انسخ اسمك";
+        myUsernameSpan.textContent = "@" + username;
         myUsernameSpan.style.cursor = "pointer";
+        myUsernameSpan.title = "اضغط لنسخ اسمك";
 
         myUsernameSpan.addEventListener("click", () => {
-          navigator.clipboard.writeText(fullUsername);
-          alert("تم نسخ اسم المستخدم!");
+          navigator.clipboard.writeText("@" + username);
+          alert("تم نسخ اسم المستخدم");
         });
-
-        // إذا فيه "?user=@اسم" في الرابط، نبدأ محادثة تلقائي
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetParam = urlParams.get("user");
-        if (targetParam) {
-          const cleanUsername = targetParam.replace("@", "");
-          startChat(cleanUsername);
-        }
       }
     });
 
@@ -62,30 +73,61 @@
       });
     });
 
-    // بحث يدوي
-    chatBtn.addEventListener("click", () => {
-      const target = searchInput.value.trim().replace("@", "");
-      if (target) {
-        startChat(target);
+    // بدء محادثة
+    chatBtn.addEventListener("click", async () => {
+      const searchValue = searchInput.value.trim().replace("@", "");
+      if (searchValue === "") return;
+
+      const otherSnapshot = await get(ref(db, "usernames/" + searchValue));
+      if (!otherSnapshot.exists()) {
+        alert("المستخدم غير موجود");
+        return;
+      }
+
+      const otherUID = otherSnapshot.val();
+      currentUsername = searchValue;
+
+      const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
+      currentChatId = chatId;
+
+      chatWithDiv.innerHTML = `<span class="chat-username" id="go-to">@${currentUsername}</span>`;
+      document.getElementById("go-to").addEventListener("click", () => {
+        window.location.href = "main.html?user=@" + currentUsername;
+      });
+
+      chatBox.innerHTML = "";
+      chatInputDiv.style.display = "flex";
+
+      const messagesRef = ref(db, "chats/" + chatId);
+      onChildAdded(messagesRef, (snapshot) => {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement("div");
+        msgDiv.className = msg.uid === uid ? "message me" : "message other";
+        msgDiv.textContent = msg.text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    });
+
+    // إرسال رسالة
+    sendBtn.addEventListener("click", () => {
+      const text = messageInput.value.trim();
+      if (text && currentChatId) {
+        push(ref(db, "chats/" + currentChatId), {
+          uid: uid,
+          text: text,
+          time: Date.now(),
+        });
+        messageInput.value = "";
       }
     });
 
-    // بدء المحادثة
-    function startChat(targetUsername) {
-      get(ref(db, "usernames/" + targetUsername)).then(snapshot => {
-        if (snapshot.exists()) {
-          const otherUID = snapshot.val();
-          const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
-
-          const li = document.createElement("li");
-          li.textContent = "@" + targetUsername;
-          chatList.appendChild(li);
-
-          // لاحقًا نفتح chat.html?chatId=...
-        } else {
-          alert("اسم المستخدم غير موجود");
-        }
-      });
+    // دعم الدخول عبر ?user=@اسم
+    const params = new URLSearchParams(window.location.search);
+    const autoUser = params.get("user");
+    if (autoUser) {
+      searchInput.value = autoUser;
+      chatBtn.click();
     }
   </script>
 </body>
