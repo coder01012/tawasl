@@ -1,98 +1,390 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>واتساب محمد</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      text-align: center;
-      background-color: #f5f5f5;
-    }
-
-    .container {
-      margin-top: 100px;
-    }
-
-    h1 {
-      color: #333;
-    }
-
-    button {
-      background-color: white;
-      color: #444;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 20px;
-    }
-
-    img {
-      width: 20px;
-      height: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق مراسلة</title>
+    <style>
+        :root {
+            --whatsapp-green: #128C7E;
+            --whatsapp-dark-green: #075E54;
+            --whatsapp-light: #ECE5DD;
+            --whatsapp-white: #FFFFFF;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #e0e0e0;
+            height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--whatsapp-white);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Header */
+        .header {
+            background-color: var(--whatsapp-dark-green);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: var(--whatsapp-light);
+            background-image: url('https://web.whatsapp.com/img/bg-chat-tile-light_a4be512e7195b6b733d9110b408f075d.png');
+            background-repeat: repeat;
+        }
+        
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .received {
+            background-color: var(--whatsapp-white);
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        
+        .sent {
+            background-color: #DCF8C6;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+            margin-left: auto;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #666;
+            text-align: end;
+            margin-top: 5px;
+        }
+        
+        /* Input Area */
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: var(--whatsapp-white);
+            border-top: 1px solid #ddd;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px;
+        }
+        
+        .send-button {
+            background-color: var(--whatsapp-green);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Auth Section */
+        .auth-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .google-btn {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .google-icon {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            padding: 8px;
+            border-radius: 2px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>أهلاً في واتساب محمد بحسن</h1>
-    <button id="login-btn">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
-      تسجيل الدخول بجوجل
-    </button>
-  </div>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header" id="header">
+            <div class="header-title">تطبيق المراسلة</div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <img class="user-avatar" id="userAvatar" src="" alt="صورة المستخدم">
+                <span id="userName"></span>
+            </div>
+        </div>
+        
+        <!-- Chat Area (ظهر عند تسجيل الدخول) -->
+        <div class="chat-area" id="chatArea" style="display: none;">
+            <!-- الرسائل تظهر هنا بشكل ديناميكي -->
+        </div>
+        
+        <!-- Input Area (ظهر عند تسجيل الدخول) -->
+        <div class="input-area" id="inputArea" style="display: none;">
+            <input type="text" class="message-input" id="messageInput" placeholder="اكتب رسالة...">
+            <button class="send-button" id="sendButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Auth Section (يختفي عند تسجيل الدخول) -->
+        <div class="auth-section" id="authSection">
+            <h2>مرحبًا بك في تطبيق المراسلة</h2>
+            <p>لتتمكن من إرسال الرسائل، يرجى تسجيل الدخول أولاً</p>
+            <button id="googleSignIn" class="google-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="google-icon" alt="Google logo">
+                تسجيل الدخول بجوجل
+            </button>
+        </div>
+    </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    <script type="module">
+        // استيراد الدوال المطلوبة من Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut,
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+        import { 
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            query,
+            orderBy,
+            onSnapshot
+        } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDFPkNaiaExQZ6D3y0CKxIn6Pi0nrE9Fno",
-      authDomain: "tawasal-431a8.firebaseapp.com",
-      databaseURL: "https://tawasal-431a8-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "tawasal-431a8",
-      storageBucket: "tawasal-431a8.appspot.com",
-      messagingSenderId: "81068658401",
-      appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0"
-    };
+        // تكوين Firebase الخاص بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFPkNaiaExQZ6D3y0CKxIn6Pi0nrE9Fno",
+            authDomain: "tawasal-431a8.firebaseapp.com",
+            projectId: "tawasal-431a8",
+            storageBucket: "tawasal-431a8.firebasestorage.app",
+            messagingSenderId: "81068658401",
+            appId: "1:81068658401:web:b62d4e56a3cdf4108e31a0",
+            measurementId: "G-P0Y3K84XL6"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const provider = new GoogleAuthProvider();
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-    document.getElementById("login-btn").onclick = async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const uid = user.uid;
+        // عناصر DOM
+        const googleSignInBtn = document.getElementById('googleSignIn');
+        const authSection = document.getElementById('authSection');
+        const chatArea = document.getElementById('chatArea');
+        const inputArea = document.getElementById('inputArea');
+        const header = document.getElementById('header');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesContainer = document.getElementById('chatArea');
 
-        const userRef = ref(db, "users/" + uid);
-        const snapshot = await get(userRef);
-
-        if (!snapshot.exists()) {
-          const username = prompt("اختر اسم مستخدم (12 حرف، حروف وأرقام فقط):");
-          const valid = /^[\u0621-\u064Aa-zA-Z0-9]{1,12}$/.test(username);
-          if (!valid) return alert("الاسم غير صالح.");
-          await set(userRef, { username });
+        // دالة تسجيل الدخول بجوجل
+        async function signInWithGoogle() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                // تحديث الواجهة بعد تسجيل الدخول
+                updateUI(result.user);
+            } catch (error) {
+                console.error('حدث خطأ أثناء التسجيل:', error);
+                alert('حدث خطأ أثناء التسجيل: ' + error.message);
+            }
         }
 
-        localStorage.setItem("uid", uid);
-        location.href = "main.html";
-      } catch (error) {
-        alert("حدث خطأ أثناء تسجيل الدخول");
-        console.error(error);
-      }
-    };
-  </script>
+        // دالة تسجيل الخروج
+        function signOutUser() {
+            signOut(auth).then(() => {
+                // تحديث الواجهة بعد تسجيل الخروج
+                authSection.style.display = 'flex';
+                chatArea.style.display = 'none';
+                inputArea.style.display = 'none';
+                userInfo.style.display = 'none';
+            }).catch((error) => {
+                console.error('حدث خطأ أثناء تسجيل الخروج:', error);
+            });
+        }
+
+        // دالة إرسال رسالة
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+            const user = auth.currentUser;
+            
+            if (messageText && user) {
+                try {
+                    await addDoc(collection(db, "messages"), {
+                        text: messageText,
+                        userId: user.uid,
+                        userName: user.displayName || "مجهول",
+                        userPhoto: user.photoURL || "",
+                        timestamp: serverTimestamp()
+                    });
+                    messageInput.value = "";
+                } catch (error) {
+                    console.error("خطأ في إرسال الرسالة:", error);
+                    alert("حدث خطأ أثناء إرسال الرسالة");
+                }
+            }
+        }
+
+        // دالة عرض الرسائل
+        function displayMessages() {
+            const q = query(collection(db, "messages"), orderBy("timestamp"));
+            
+            onSnapshot(q, (snapshot) => {
+                messagesContainer.innerHTML = "";
+                snapshot.forEach((doc) => {
+                    const message = doc.data();
+                    displayMessage(message);
+                });
+                // التمرير لآخر رسالة
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        // دالة عرض رسالة واحدة
+        function displayMessage(message) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message");
+            
+            const isCurrentUser = message.userId === auth.currentUser?.uid;
+            messageDiv.classList.add(isCurrentUser ? "sent" : "received");
+            
+            const messageContent = `
+                <div class="message-sender">${message.userName}</div>
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">
+                    ${new Date(message.timestamp?.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+            `;
+            
+            messageDiv.innerHTML = messageContent;
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        // دالة تحديث واجهة المستخدم
+        function updateUI(user) {
+            if (user) {
+                // المستخدم مسجل الدخول
+                authSection.style.display = 'none';
+                chatArea.style.display = 'block';
+                inputArea.style.display = 'flex';
+                userInfo.style.display = 'flex';
+                
+                // عرض معلومات المستخدم
+                userName.textContent = user.displayName || "مستخدم";
+                userAvatar.src = user.photoURL || "https://via.placeholder.com/40";
+                
+                // عرض الرسائل
+                displayMessages();
+            } else {
+                // لا يوجد مستخدم مسجل الدخول
+                authSection.style.display = 'flex';
+                chatArea.style.display = 'none';
+                inputArea.style.display = 'none';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // إضافة معالج الأحداث
+        googleSignInBtn.addEventListener('click', signInWithGoogle);
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // إضافة زر تسجيل الخروج إلى الهيدر
+        const signOutBtn = document.createElement("button");
+        signOutBtn.textContent = "تسجيل الخروج";
+        signOutBtn.style.marginRight = "10px";
+        signOutBtn.style.padding = "5px 10px";
+        signOutBtn.style.background = "transparent";
+        signOutBtn.style.border = "1px solid white";
+        signOutBtn.style.color = "white";
+        signOutBtn.style.borderRadius = "4px";
+        signOutBtn.style.cursor = "pointer";
+        signOutBtn.addEventListener('click', signOutUser);
+        header.insertBefore(signOutBtn, userInfo);
+
+        // متابعة حالة المصادقة
+        onAuthStateChanged(auth, (user) => {
+            updateUI(user);
+        });
+    </script>
 </body>
-</html>
+              </html>
