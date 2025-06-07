@@ -1,10 +1,226 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الرئيسية</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    
+    body {
+      background-color: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .top-bar {
+      background-color: #075e54;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 30%;
+      background-color: white;
+      border-left: 1px solid #e9edef;
+      overflow-y: auto;
+    }
+    
+    .search-box {
+      padding: 10px;
+      background-color: #f0f2f5;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: white;
+    }
+    
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-item {
+      display: flex;
+      padding: 10px;
+      border-bottom: 1px solid #e9edef;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .chat-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .chat-item.active {
+      background-color: #e9edef;
+    }
+    
+    .chat-item-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: #dfe5e7;
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #555;
+    }
+    
+    .chat-item-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .chat-item-name {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    
+    .chat-item-last-msg {
+      color: #667781;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .chat-item-time {
+      font-size: 12px;
+      color: #667781;
+    }
+    
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #e5ddd5;
+      background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239C92AC' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+    }
+    
+    .chat-header {
+      background-color: #075e54;
+      color: white;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .chat-header-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #dfe5e7;
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #555;
+    }
+    
+    .chat-header-name {
+      flex: 1;
+      font-weight: bold;
+    }
+    
+    .messages-container {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    
+    .message {
+      max-width: 70%;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      position: relative;
+      word-wrap: break-word;
+    }
+    
+    .message.me {
+      background-color: #dcf8c6;
+      margin-left: auto;
+      margin-right: 5px;
+    }
+    
+    .message.other {
+      background-color: white;
+      margin-right: auto;
+      margin-left: 5px;
+    }
+    
+    .message-time {
+      font-size: 11px;
+      color: #667781;
+      text-align: left;
+      margin-top: 3px;
+    }
+    
+    .chat-input-container {
+      padding: 10px;
+      background-color: #f0f2f5;
+      display: flex;
+      align-items: center;
+    }
+    
+    .chat-input-container input {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 20px;
+      margin: 0 10px;
+    }
+    
+    .chat-input-container button {
+      background-color: #075e54;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    
+    .no-chat-selected {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #667781;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
   <div class="top-bar">
@@ -12,18 +228,43 @@
     <button id="logout-btn">تسجيل الخروج</button>
   </div>
 
-  <div class="search-box">
-    <input type="text" id="search" placeholder="ابحث عن @اسم_المستخدم" />
-    <button id="chat-btn">بدء محادثة</button>
-  </div>
-
-  <div id="chat-with"></div>
-
-  <div id="chat-box"></div>
-
-  <div class="chat-input" style="display: none">
-    <input type="text" id="message-input" placeholder="اكتب رسالتك..." />
-    <button id="send-btn">إرسال</button>
+  <div class="container">
+    <div class="sidebar">
+      <div class="search-box">
+        <input type="text" id="search" placeholder="ابحث عن محادثة أو مستخدم" />
+      </div>
+      <div class="chat-list" id="chat-list">
+        <!-- سيتم ملء قائمة المحادثات هنا تلقائياً -->
+      </div>
+    </div>
+    
+    <div class="chat-area" id="chat-area">
+      <div class="no-chat-selected">
+        <p>اختر محادثة لبدء الدردشة</p>
+      </div>
+      <!--
+      <div class="chat-header">
+        <div class="chat-header-avatar">ص</div>
+        <div class="chat-header-name">@اسم_المستخدم</div>
+      </div>
+      <div class="messages-container" id="messages-container">
+        <div class="message me">
+          مرحبا كيف حالك؟
+          <div class="message-time">10:30 ص</div>
+        </div>
+        <div class="message other">
+          أنا بخير، شكراً!
+          <div class="message-time">10:31 ص</div>
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" id="message-input" placeholder="اكتب رسالة..." />
+        <button id="send-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+      -->
+    </div>
   </div>
 
   <script type="module">
@@ -36,6 +277,7 @@
       query,
       orderByChild,
       equalTo,
+      onValue,
     } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
     import { signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
@@ -43,13 +285,8 @@
     const myUsernameSpan = document.getElementById("my-username");
     const logoutBtn = document.getElementById("logout-btn");
     const searchInput = document.getElementById("search");
-    const chatBtn = document.getElementById("chat-btn");
-    const chatWithDiv = document.getElementById("chat-with");
-    const chatBox = document.getElementById("chat-box");
-    const messageInput = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-btn");
-    const chatInputDiv = document.querySelector(".chat-input");
-
+    const chatList = document.getElementById("chat-list");
+    const chatArea = document.getElementById("chat-area");
     let currentChatId = "";
     let currentUsername = "";
 
@@ -66,8 +303,8 @@
           alert("تم نسخ اسم المستخدم");
         });
 
-        // استمع للمحادثات الجديدة تلقائياً
-        listenForNewChats(uid, username);
+        // تحميل المحادثات التلقائية
+        loadChats(uid, username);
       }
     });
 
@@ -79,156 +316,188 @@
       });
     });
 
-    // بدء محادثة
-    chatBtn.addEventListener("click", async () => {
-      const searchValue = searchInput.value.trim().replace("@", "");
-      if (searchValue === "") return;
-
-      await startChat(searchValue);
-    });
-
-    // إرسال رسالة
-    sendBtn.addEventListener("click", () => {
-      const text = messageInput.value.trim();
-      if (text && currentChatId) {
-        push(ref(db, "chats/" + currentChatId), {
-          uid: uid,
-          text: text,
-          time: Date.now(),
-        });
-        messageInput.value = "";
-      }
-    });
-
-    // دعم الدخول عبر ?user=@اسم
-    const params = new URLSearchParams(window.location.search);
-    const autoUser = params.get("user");
-    if (autoUser) {
-      searchInput.value = autoUser;
-      chatBtn.click();
+    // تحميل قائمة المحادثات
+    async function loadChats(myUid, myUsername) {
+      const chatsRef = ref(db, "chats");
+      onValue(chatsRef, (snapshot) => {
+        const chats = snapshot.val() || {};
+        const myChats = [];
+        
+        // تصفية المحادثات الخاصة بالمستخدم الحالي
+        for (const chatId in chats) {
+          if (chatId.includes(myUid)) {
+            const [uid1, uid2] = chatId.split("_");
+            const otherUid = uid1 === myUid ? uid2 : uid1;
+            myChats.push({ chatId, otherUid });
+          }
+        }
+        
+        // جلب معلومات المستخدمين الآخرين وعرض المحادثات
+        renderChatList(myChats, myUid);
+      });
     }
 
-    // استمع للمحادثات الجديدة تلقائياً
-    async function listenForNewChats(myUid, myUsername) {
-      // استمع لكل المحادثات التي تحتوي على UID الخاص بي
-      const chatsRef = ref(db, "chats");
-      onChildAdded(chatsRef, async (snapshot) => {
-        const chatId = snapshot.key;
-        if (chatId.includes(myUid)) {
-          // استخراج UID الآخر من معرف المحادثة
-          const [uid1, uid2] = chatId.split("_");
-          const otherUid = uid1 === myUid ? uid2 : uid1;
+    // عرض قائمة المحادثات
+    async function renderChatList(chatItems, myUid) {
+      chatList.innerHTML = "";
+      
+      for (const item of chatItems) {
+        const userSnapshot = await get(ref(db, `users/${item.otherUid}`));
+        if (userSnapshot.exists()) {
+          const user = userSnapshot.val();
+          const lastMsg = await getLastMessage(item.chatId);
           
-          // الحصول على اسم المستخدم الآخر
-          const otherUserSnapshot = await get(ref(db, `users/${otherUid}`));
-          if (otherUserSnapshot.exists()) {
-            const otherUsername = otherUserSnapshot.val().username;
-            
-            // إذا كانت هذه المحادثة الحالية، قم بتحديث العرض
-            if (chatId === currentChatId) {
-              const msg = snapshot.val();
-              const msgDiv = document.createElement("div");
-              msgDiv.className = msg.uid === myUid ? "message me" : "message other";
-              msgDiv.textContent = msg.text;
-              chatBox.appendChild(msgDiv);
-              chatBox.scrollTop = chatBox.scrollHeight;
-            } else {
-              // عرض إشعار بوجود رسالة جديدة
-              showNewMessageNotification(otherUsername, chatId);
-            }
-          }
+          const chatItem = document.createElement("div");
+          chatItem.className = "chat-item";
+          chatItem.dataset.chatId = item.chatId;
+          chatItem.dataset.username = user.username;
+          
+          chatItem.innerHTML = `
+            <div class="chat-item-avatar">${user.username.charAt(0)}</div>
+            <div class="chat-item-info">
+              <div class="chat-item-name">@${user.username}</div>
+              <div class="chat-item-last-msg">${lastMsg?.text || "لا توجد رسائل"}</div>
+            </div>
+            <div class="chat-item-time">${lastMsg ? formatTime(lastMsg.time) : ""}</div>
+          `;
+          
+          chatItem.addEventListener("click", () => {
+            openChat(item.chatId, user.username, myUid);
+          });
+          
+          chatList.appendChild(chatItem);
+        }
+      }
+    }
+
+    // فتح محادثة
+    function openChat(chatId, username, myUid) {
+      currentChatId = chatId;
+      currentUsername = username;
+      
+      // تحديث واجهة المحادثة
+      chatArea.innerHTML = `
+        <div class="chat-header">
+          <div class="chat-header-avatar">${username.charAt(0)}</div>
+          <div class="chat-header-name">@${username}</div>
+        </div>
+        <div class="messages-container" id="messages-container"></div>
+        <div class="chat-input-container">
+          <input type="text" id="message-input" placeholder="اكتب رسالة..." />
+          <button id="send-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      `;
+      
+      const messagesContainer = document.getElementById("messages-container");
+      const messageInput = document.getElementById("message-input");
+      const sendBtn = document.getElementById("send-btn");
+      
+      // تحميل الرسائل السابقة
+      const messagesRef = ref(db, `chats/${chatId}`);
+      onChildAdded(messagesRef, (snapshot) => {
+        const msg = snapshot.val();
+        const msgDiv = document.createElement("div");
+        msgDiv.className = msg.uid === myUid ? "message me" : "message other";
+        msgDiv.innerHTML = `
+          ${msg.text}
+          <div class="message-time">${formatTime(msg.time)}</div>
+        `;
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+      
+      // إرسال رسالة جديدة
+      sendBtn.addEventListener("click", () => {
+        const text = messageInput.value.trim();
+        if (text) {
+          push(ref(db, `chats/${chatId}`), {
+            uid: myUid,
+            text: text,
+            time: Date.now(),
+          });
+          messageInput.value = "";
+        }
+      });
+      
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendBtn.click();
+        }
+      });
+      
+      // تحديث العنصر النشط في قائمة المحادثات
+      document.querySelectorAll(".chat-item").forEach(item => {
+        item.classList.remove("active");
+        if (item.dataset.chatId === chatId) {
+          item.classList.add("active");
         }
       });
     }
 
-    // عرض إشعار برسالة جديدة
-    function showNewMessageNotification(username, chatId) {
-      const notification = document.createElement("div");
-      notification.className = "new-message-notification";
-      notification.innerHTML = `
-        <span>رسالة جديدة من @${username}</span>
-        <button class="open-chat-btn">فتح المحادثة</button>
-      `;
-      
-      const openBtn = notification.querySelector(".open-chat-btn");
-      openBtn.addEventListener("click", () => {
-        startChat(username);
-        notification.remove();
-      });
-      
-      document.body.appendChild(notification);
-      
-      // إزالة الإشعار بعد 5 ثواني
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
+    // الحصول على آخر رسالة في المحادثة
+    async function getLastMessage(chatId) {
+      const snapshot = await get(query(ref(db, `chats/${chatId}`), orderByChild("time"), limitToLast(1)));
+      if (snapshot.exists()) {
+        let lastMsg = null;
+        snapshot.forEach(child => {
+          lastMsg = child.val();
+        });
+        return lastMsg;
+      }
+      return null;
     }
 
-    // بدء محادثة مع مستخدم
-    async function startChat(username) {
-      const searchValue = username.replace("@", "");
-      if (searchValue === "") return;
+    // تنسيق الوقت
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'م' : 'ص';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // الساعة 0 تصبح 12
+      return `${hours}:${minutes} ${ampm}`;
+    }
 
-      const otherSnapshot = await get(ref(db, "usernames/" + searchValue));
-      if (!otherSnapshot.exists()) {
-        alert("المستخدم غير موجود");
+    // دالة مساعدة للحد من عدد النتائج
+    function limitToLast(limit) {
+      return {
+        orderByChild: null,
+        limitToLast: limit
+      };
+    }
+
+    // البحث عن محادثات
+    searchInput.addEventListener("input", async (e) => {
+      const searchTerm = e.target.value.trim().replace("@", "");
+      if (searchTerm === "") {
+        loadChats(uid, myUsernameSpan.textContent.replace("@", ""));
         return;
       }
-
-      const otherUID = otherSnapshot.val();
-      currentUsername = searchValue;
-
-      const chatId = uid < otherUID ? uid + "_" + otherUID : otherUID + "_" + uid;
-      currentChatId = chatId;
-
-      chatWithDiv.innerHTML = `<span class="chat-username" id="go-to">@${currentUsername}</span>`;
-      document.getElementById("go-to").addEventListener("click", () => {
-        window.location.href = "main.html?user=@" + currentUsername;
-      });
-
-      chatBox.innerHTML = "";
-      chatInputDiv.style.display = "flex";
-
-      // جلب جميع الرسائل السابقة لهذه المحادثة
-      const messagesRef = ref(db, "chats/" + chatId);
-      onChildAdded(messagesRef, (snapshot) => {
-        const msg = snapshot.val();
-        const msgDiv = document.createElement("div");
-        msgDiv.className = msg.uid === uid ? "message me" : "message other";
-        msgDiv.textContent = msg.text;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      });
-    }
+      
+      // البحث في أسماء المستخدمين
+      const userSnapshot = await get(ref(db, "usernames/" + searchTerm));
+      if (userSnapshot.exists()) {
+        const otherUid = userSnapshot.val();
+        const chatId = uid < otherUid ? uid + "_" + otherUid : otherUid + "_" + uid;
+        
+        // عرض المحادثة إذا وجدت
+        const chatSnapshot = await get(ref(db, `chats/${chatId}`));
+        if (chatSnapshot.exists()) {
+          const userSnapshot = await get(ref(db, `users/${otherUid}`));
+          if (userSnapshot.exists()) {
+            const user = userSnapshot.val();
+            openChat(chatId, user.username, uid);
+          }
+        } else {
+          // إذا لم توجد محادثة، يمكنك إنشاء واحدة جديدة هنا
+          alert("لا توجد محادثة مع هذا المستخدم بعد");
+        }
+      } else {
+        alert("المستخدم غير موجود");
+      }
+    });
   </script>
-  
-  <style>
-    .new-message-notification {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #fff;
-      padding: 10px 15px;
-      border-radius: 5px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 1000;
-    }
-    
-    .open-chat-btn {
-      background: #4CAF50;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    
-    .open-chat-btn:hover {
-      background: #45a049;
-    }
-  </style>
 </body>
-  </html>
+      </html>
